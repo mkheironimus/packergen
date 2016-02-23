@@ -1,0 +1,6 @@
+---
+type: vagrant
+keep_input_artifact: true
+compression_level: 9
+output: "builds/{{.BuildName}}-{{user `stamp`}}.box"
+...

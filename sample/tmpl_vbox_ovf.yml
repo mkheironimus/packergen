@@ -1,0 +1,5 @@
+---
+# Overlay for tmpl_vbox.yml
+type: virtualbox-ovf
+guest_additions_mode: disable
+...

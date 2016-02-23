@@ -1,0 +1,26 @@
+---
+output_directory: "builds/{{build_name}}-{{user `stamp`}}"
+ssh_password: vagrant
+ssh_wait_timeout: 10000s
+headless: "{{user `headless`}}"
+export_opts: 
+  - --manifest
+ssh_username: vagrant
+vboxmanage: 
+  - 
+    - modifyvm
+    - "{{.Name}}"
+    - --memory
+    - "1280"
+  - 
+    - modifyvm
+    - "{{.Name}}"
+    - --cpus
+    - "1"
+  - 
+    - modifyvm
+    - "{{.Name}}"
+    - --vram
+    - "12"
+shutdown_command: echo 'vagrant' | sudo -S /sbin/halt -h -p
+...

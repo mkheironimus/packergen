@@ -1,0 +1,10 @@
+---
+environment_vars: 
+  - "HOME_DIR=/home/vagrant"
+  - "http_proxy={{user `http_proxy`}}"
+  - "https_proxy={{user `https_proxy`}}"
+  - "no_proxy={{user `no_proxy`}}"
+  - "VERBOSE={{user `verbose`}}"
+execute_command: "env {{.Vars}} sudo -S -E bash -eu '{{.Path}}'"
+type: shell
+...

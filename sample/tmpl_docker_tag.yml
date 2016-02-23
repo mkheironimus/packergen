@@ -1,0 +1,5 @@
+---
+type: docker-tag
+repository: mkheironimus/{{build_name}}
+tag: "{{user `stamp`}}"
+...

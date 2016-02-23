@@ -1,0 +1,10 @@
+---
+# Overlay for tmpl_vbox.yml
+type: virtualbox-iso
+http_directory: http
+hard_drive_interface: sata
+guest_os_type: RedHat_64
+guest_additions_path: VBoxGuestAdditions_{{.Version}}.iso
+disk_size: 8192
+iso_checksum_type: sha512
+...

@@ -1,0 +1,201 @@
+{
+  "builders" : [
+    {
+      "name" : "centos-6",
+      "commit" : true,
+      "pull" : false,
+      "type" : "docker",
+      "image" : "centos:6"
+    },
+    {
+      "name" : "centos-7",
+      "commit" : true,
+      "pull" : false,
+      "type" : "docker",
+      "image" : "centos:7"
+    },
+    {
+      "name" : "centos-7-virtualbox",
+      "http_directory" : "http",
+      "hard_drive_interface" : "sata",
+      "output_directory" : "builds/{{build_name}}-{{user `stamp`}}",
+      "guest_additions_path" : "VBoxGuestAdditions_{{.Version}}.iso",
+      "ssh_password" : "vagrant",
+      "iso_url" : "iso/CentOS-7-x86_64-DVD-1511.iso",
+      "ssh_wait_timeout" : "10000s",
+      "headless" : "{{user `headless`}}",
+      "boot_command" : [
+        "<tab> text rd.live.check=0 ks=http://{{.HTTPIP}}:{{.HTTPPort}}/centos-7.ks<enter><wait>"
+      ],
+      "disk_size" : 8192,
+      "vm_name" : "centos-7-{{user `stamp`}}",
+      "export_opts" : [
+        "--manifest"
+      ],
+      "type" : "virtualbox-iso",
+      "guest_os_type" : "RedHat_64",
+      "ssh_username" : "vagrant",
+      "iso_checksum_type" : "sha512",
+      "vboxmanage" : [
+        [
+          "modifyvm",
+          "{{.Name}}",
+          "--memory",
+          "1280"
+        ],
+        [
+          "modifyvm",
+          "{{.Name}}",
+          "--cpus",
+          "1"
+        ],
+        [
+          "modifyvm",
+          "{{.Name}}",
+          "--vram",
+          "12"
+        ]
+      ],
+      "iso_checksum" : "3e084199713f0a7a39942a123ad698d36e0ee0a2253774e96c44a85df1574ed4ab6f7f13f52e778318902e59d7e0eb056b8557397946e1629119dec1b3b8d442",
+      "shutdown_command" : "echo 'vagrant' | sudo -S /sbin/halt -h -p"
+    },
+    {
+      "name" : "centos-6-virtualbox",
+      "http_directory" : "http",
+      "hard_drive_interface" : "sata",
+      "output_directory" : "builds/{{build_name}}-{{user `stamp`}}",
+      "guest_additions_path" : "VBoxGuestAdditions_{{.Version}}.iso",
+      "ssh_password" : "vagrant",
+      "iso_url" : "iso/CentOS-6.7-x86_64-bin-DVD1.iso",
+      "ssh_wait_timeout" : "10000s",
+      "headless" : "{{user `headless`}}",
+      "boot_command" : [
+        "<tab> text ks=http://{{.HTTPIP}}:{{.HTTPPort}}/centos-6.ks<enter><wait>"
+      ],
+      "disk_size" : 8192,
+      "vm_name" : "centos-6-{{user `stamp`}}",
+      "export_opts" : [
+        "--manifest"
+      ],
+      "type" : "virtualbox-iso",
+      "guest_os_type" : "RedHat_64",
+      "ssh_username" : "vagrant",
+      "iso_checksum_type" : "sha512",
+      "vboxmanage" : [
+        [
+          "modifyvm",
+          "{{.Name}}",
+          "--memory",
+          "1280"
+        ],
+        [
+          "modifyvm",
+          "{{.Name}}",
+          "--cpus",
+          "1"
+        ],
+        [
+          "modifyvm",
+          "{{.Name}}",
+          "--vram",
+          "12"
+        ]
+      ],
+      "iso_checksum" : "c694ba4903ac2eb07d996ffa06b92d1dda78ec035d1ad87fdc9681e7245e7fc363eae987ec2476a408cf0bcaed0080ab05c7f26d7a9141eec8f898993c1057b1",
+      "shutdown_command" : "echo 'vagrant' | sudo -S /sbin/halt -h -p"
+    }
+  ],
+  "provisioners" : [
+    {
+      "scripts" : [
+        "shell/yum.sh",
+        "shell/docker_prep.sh",
+        "shell/grub.sh",
+        "shell/patch.sh"
+      ],
+      "environment_vars" : [
+        "HOME_DIR=/home/vagrant",
+        "http_proxy={{user `http_proxy`}}",
+        "https_proxy={{user `https_proxy`}}",
+        "no_proxy={{user `no_proxy`}}",
+        "VERBOSE={{user `verbose`}}"
+      ],
+      "execute_command" : "env {{.Vars}} sudo -S -E bash -eu '{{.Path}}'",
+      "type" : "shell",
+      "override" : {
+        "centos-6" : {
+          "execute_command" : "env {{.Vars}} bash -eu '{{.Path}}'"
+        },
+        "centos-7" : {
+          "execute_command" : "env {{.Vars}} bash -eu '{{.Path}}'"
+        }
+      }
+    },
+    {
+      "scripts" : [
+        "shell/vmtools.sh",
+        "shell/vagrant.sh",
+        "shell/vm_ami_cleanup.sh",
+        "shell/cleanup.sh",
+        "shell/whiteout.sh"
+      ],
+      "environment_vars" : [
+        "HOME_DIR=/home/vagrant",
+        "http_proxy={{user `http_proxy`}}",
+        "https_proxy={{user `https_proxy`}}",
+        "no_proxy={{user `no_proxy`}}",
+        "VERBOSE={{user `verbose`}}"
+      ],
+      "execute_command" : "env {{.Vars}} sudo -S -E bash -eu '{{.Path}}'",
+      "type" : "shell",
+      "override" : {
+        "centos-6" : {
+          "execute_command" : "env {{.Vars}} bash -eu '{{.Path}}'"
+        },
+        "centos-7" : {
+          "execute_command" : "env {{.Vars}} bash -eu '{{.Path}}'"
+        }
+      },
+      "pause_before" : "10s"
+    }
+  ],
+  "variables" : {
+    "headless" : "true",
+    "stamp" : "{{isotime \"20060102\"}}",
+    "verbose" : "true",
+    "https_proxy" : "{{env `https_proxy`}}",
+    "no_proxy" : "{{env `no_proxy`}}",
+    "http_proxy" : "{{env `http_proxy`}}"
+  },
+  "post-processors" : [
+    {
+      "only" : [
+        "centos-6-virtualbox",
+        "centos-7-virtualbox"
+      ],
+      "keep_input_artifact" : true,
+      "compression_level" : 9,
+      "type" : "vagrant",
+      "output" : "builds/{{.BuildName}}-{{user `stamp`}}.box"
+    },
+    [
+      {
+        "tag" : "{{user `stamp`}}",
+        "only" : [
+          "centos-6",
+          "centos-7"
+        ],
+        "type" : "docker-tag",
+        "repository" : "mkheironimus/{{build_name}}"
+      },
+      {
+        "only" : [
+          "centos-6",
+          "centos-7"
+        ],
+        "path" : "builds/{{build_name}}-{{user `stamp`}}.tar",
+        "type" : "docker-save"
+      }
+    ]
+  ]
+}
