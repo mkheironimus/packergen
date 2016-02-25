@@ -19,7 +19,7 @@ class PackerGen(object):
     def load(self, handle=sys.stdin):
         """Load and process YAML source from filehandle."""
         self.cfg = yaml.safe_load(handle)
-        self.generate_packer()
+        self.generate()
 
 
     def save(self, handle=sys.stdout):
@@ -72,7 +72,7 @@ class PackerGen(object):
                 self.expand_entry(p) for p in post ]
 
 
-    def generate_packer(self):
+    def generate(self):
         self.output = { 'builders': [] }
         for name, builder in self.cfg['builders'].iteritems():
             self.output['builders'].append(self.build(name, builder))
