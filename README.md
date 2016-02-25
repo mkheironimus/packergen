@@ -12,7 +12,8 @@ can run it.
 
 ## python
 
-Python 2.7 implementation. Might work on other releases, but not tested.
+Python 2.7 implementation. It uses argparse which is documented as being new in
+2.7, so older releases are unlikely to work.
 
 ## sample
 
