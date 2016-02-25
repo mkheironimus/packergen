@@ -1,71 +1,97 @@
-#! /usr/bin/python
+#! /usr/bin/env python2
 
 import argparse
 import json
 import sys
 import yaml
 
-def load_yaml(name):
-    """Utility function to import a YAML file."""
-    y = open(name, 'r')
-    yml = yaml.safe_load(y)
-    y.close()
-    return yml
+class PackerGen(object):
+    """Load and process YAML source in to Packer JSON."""
+
+    def __init__(self, handle=None):
+        """Read and process YAML from a filehandle, if specified."""
+        self.cfg = {}
+        self.output = {}
+        if handle is not None:
+            self.load(handle)
 
 
-def expand_entry(entry):
-    """Load all of the templates in an entry."""
-    new = {}
-    if 'config_template' in entry:
-        if type(entry['config_template']).__name__ == 'str':
-            new.update(load_yaml(entry['config_template']))
-        else:
-            [new.update(load_yaml(tmpl)) for tmpl in entry['config_template']]
-        del entry['config_template']
-    new.update(entry)
-    return new
+    def load(self, handle=sys.stdin):
+        """Load and process YAML source from filehandle."""
+        self.cfg = yaml.safe_load(handle)
+        self.generate_packer()
 
 
-def build(name, builder):
-    """Process and return a single builder."""
-    b = expand_entry(builder)
-    b['name'] = name
-    return b
+    def save(self, handle=sys.stdout):
+        """Save JSON output to filehandle."""
+        json.dump(self.output, handle, indent=2, separators=(',', ': '))
+        handle.write('\n') # json.dump doesn't write a final newline
 
 
-def provision(prov, cfg):
-    """Process and return a single provisioner."""
-    p = expand_entry(prov)
-    if 'provisioner_override' in cfg and not 'override' in prov:
-        p['override'] = cfg['provisioner_override']
-    return p
+    def load_yaml(self, name):
+        """Utility function to import a YAML file."""
+        y = open(name, 'r')
+        yml = yaml.safe_load(y)
+        y.close()
+        return yml
 
 
-def postproc(post):
-    """Process and return a postprocessor entry, which can be either a single
-    postprocessor or a group (array) of postprocessors."""
-    return expand_entry(post) if type(post).__name__ == 'dict' else [
-            expand_entry(p) for p in post ]
+    def expand_entry(self, entry):
+        """Load all of the templates in an entry."""
+        new = {}
+        if 'config_template' in entry:
+            if type(entry['config_template']).__name__ == 'str':
+                new.update(self.load_yaml(entry['config_template']))
+            else:
+                [new.update(self.load_yaml(tmpl))
+                        for tmpl in entry['config_template']]
+            del entry['config_template']
+        new.update(entry)
+        return new
 
 
-def generate_packer(cfg):
-    pack = { 'builders': [] }
-    for name, builder in cfg['builders'].iteritems():
-        pack['builders'].append(build(name, builder))
+    def build(self, name, builder):
+        """Process and return a single builder."""
+        b = self.expand_entry(builder)
+        b['name'] = name
+        return b
 
-    if 'provisioners' in cfg:
-        pack['provisioners'] = [provision(p, cfg) for p in cfg['provisioners']]
 
-    if 'post-processors' in cfg:
-        pack['post-processors'] = [postproc(p) for p in cfg['post-processors']]
+    def provision(self, prov, cfg):
+        """Process and return a single provisioner."""
+        p = self.expand_entry(prov)
+        if 'provisioner_override' in cfg and not 'override' in prov:
+            p['override'] = cfg['provisioner_override']
+        return p
 
-    if 'description' in cfg:
-        pack['description'] = cfg['description']
 
-    if 'variables' in cfg:
-        pack['variables'] = cfg['variables']
+    def postproc(self, post):
+        """Process and return a postprocessor entry, which can be either a
+        single postprocessor or a group (array) of postprocessors."""
+        return self.expand_entry(post) if type(post).__name__ == 'dict' else [
+                self.expand_entry(p) for p in post ]
 
-    return pack
+
+    def generate_packer(self):
+        self.output = { 'builders': [] }
+        for name, builder in self.cfg['builders'].iteritems():
+            self.output['builders'].append(self.build(name, builder))
+
+        if 'provisioners' in self.cfg:
+            self.output['provisioners'] = [self.provision(p, self.cfg)
+                    for p in self.cfg['provisioners']]
+
+        if 'post-processors' in self.cfg:
+            self.output['post-processors'] = [self.postproc(p)
+                    for p in self.cfg['post-processors']]
+
+        if 'description' in self.cfg:
+            self.output['description'] = self.cfg['description']
+
+        if 'variables' in self.cfg:
+            self.output['variables'] = self.cfg['variables']
+
+        return self.output
 
 
 if __name__ == '__main__':
@@ -79,9 +105,7 @@ if __name__ == '__main__':
             help='output JSON file', metavar='file.json')
     args = parser.parse_args()
 
-    cfg = yaml.safe_load(args.src)
+    pg = PackerGen(handle=args.src)
     args.src.close()
-    output = generate_packer(cfg)
-    json.dump(output, args.dest, indent=2, separators=(',', ': '))
-    args.dest.write('\n') # json.dump doesn't write a final newline
+    pg.save(args.dest)
     args.dest.close()
