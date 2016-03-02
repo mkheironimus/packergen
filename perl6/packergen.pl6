@@ -1,6 +1,6 @@
 #! /usr/bin/env perl6
 #
-# Copyright 2015 Michael Heironimus
+# Copyright 2016 Michael Heironimus
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
