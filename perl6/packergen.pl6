@@ -1,4 +1,5 @@
 #! /usr/bin/env perl6
+# vim: filetype=perl6
 #
 # Copyright 2016 Michael Heironimus
 #
@@ -23,18 +24,18 @@ class PackerGen {
     has %!cfg = ();
     has %.output = ();
 
-    # Constructor, taking only an (optional) input file.
+    # Constructor taking an optional input file, not inherited by child class.
     submethod BUILD(Str :$yaml='') {
         self.load($yaml);
         self.generate();
     }
 
-    # Load a YAML file.
+    # Load a YAML file from stdin or the named file.
     method load(Str $in) {
         %!cfg = load-yaml(($in ne '') ?? slurp($in) !! $*IN.slurp-rest);
     }
 
-    # Write the generated to JSON to stdout or the given file.
+    # Write the generated to JSON to stdout or the given filename.
     multi method save(Str $out where { $out eq '' }) {
         say to-json(%!output);
     }
@@ -65,7 +66,7 @@ class PackerGen {
     # is no override in the provisioner.
     method provision(%prov --> Hash) {
         my %new = self.expand_entry(%prov);
-        # I should describe the precedence of overrides in the YAML.
+        # I should describe the precedence of multiple override definitions.
         if (%!cfg<provisioner_override>:exists && !(%prov<override>:exists)) {
             %new<override> = %!cfg<provisioner_override>;
         }
@@ -106,5 +107,3 @@ sub MAIN(Str :$in='', Str :$out='') {
     my $pg = PackerGen.new(yaml => $in);
     $pg.save($out);
 }
-
-# vim: filetype=perl6
