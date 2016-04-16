@@ -10,6 +10,9 @@ checking or documentation.
 Perl 6 (rakudo-star) implementation, plus a Dockerfile to build an image that
 can run it.
 
+It requires the `JSON::Pretty` and `YAMLish` modules, both available through
+panda.
+
 ## python
 
 Python 2.7 implementation. It uses argparse which is documented as being new in
